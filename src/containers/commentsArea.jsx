@@ -26,10 +26,9 @@ class CommentsArea extends Component {
 
   handleSubmit = async () => {
     //Add current time of comment to state and send request
-    let currentTime = moment().format("DD/MM/YYYY HH:MM:ss");
+    let currentTime = moment().format("Do MMMM YYYY, h:mm:ss a");
     let { state } = this;
     state.dateTime = currentTime;
-    console.log("JI");
     this.handleAddNewComment(state);
   };
 
@@ -43,33 +42,50 @@ class CommentsArea extends Component {
         },
         body: JSON.stringify(state)
       });
-      //Parse response
-      let response = await res.json();
 
-      //Add new comment to state instance
-      const { newComment } = response;
-      console.log(newComment);
-      const { allComments } = state;
-      allComments.push(newComment);
+      //Confirm message has been added succesfully
+      if (res.status === 200) {
+        //Parse response
+        let response = await res.json();
 
-      //Update state with newComment and reset form
-      this.setState({ allComments: state.allComments, name: "", comment: "" });
+        //Add new comment to state instance
+        const { newComment } = response;
+        console.log(newComment);
+        const { allComments } = state;
+        allComments.push(newComment);
+
+        //Update state with newComment and reset form
+        this.setState({
+          allComments: state.allComments,
+          name: "",
+          comment: ""
+        });
+      } else {
+        let message = await res.json();
+        this.setState({ message }, () => console.log(this.state));
+      }
     } catch (error) {
       console.log("There was an error sending new comment.", error);
     }
   };
 
   //Request all comments from DB
-  getAllComments = async state => {
-    const res = await fetch(`${url}/allComments`);
+  getAllComments = async () => {
+    try {
+      //fetch all comments from API
+      const res = await fetch(`${url}/allComments`);
 
-    if (res.status === 200) {
-      let response = await res.json();
-      let allComments = response.comments;
-      this.setState({ allComments });
-    } else {
-      let message = await res.json();
-      this.setState({ message }, () => console.log(this.state));
+      //Confirm that there are comments prestored
+      if (res.status === 200) {
+        let response = await res.json();
+        let allComments = response.comments;
+        this.setState({ allComments });
+      } else {
+        let message = await res.json();
+        this.setState({ message }, () => console.log(this.state));
+      }
+    } catch (error) {
+      console.log("There was an error sending getting all comments.", error);
     }
   };
 
